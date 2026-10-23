@@ -1,0 +1,50 @@
+; Engine configuration file.
+; Money Empire — start broke, become the first billionaire.
+
+config_version=5
+
+[application]
+
+config/name="Money Empire"
+config/description="Start homeless with $100. Work, build businesses, flip houses, trade stocks and race other players to $1 Billion."
+config/version="0.1.0"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+config/icon="res://assets/marketing/app_icon_512.png"
+boot_splash/bg_color=Color(0.043, 0.067, 0.11, 1)
+boot_splash/show_image=false
+
+[autoload]
+
+Game="*res://scripts/core/game.gd"
+Net="*res://scripts/net/net.gd"
+Sfx="*res://scripts/core/sfx.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=4
+
+[gui]
+
+common/drop_mouse_on_gui_input_disabled=true
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=false
+pointing/emulate_mouse_from_touch=true
+
+[physics]
+
+common/physics_ticks_per_second=60
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
+environment/defaults/default_clear_color=Color(0.043, 0.067, 0.11, 1)
+anti_aliasing/quality/msaa_3d=1

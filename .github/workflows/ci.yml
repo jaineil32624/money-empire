@@ -1,0 +1,164 @@
+name: Test & Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: "4.3"
+  EXPORT_NAME: MoneyEmpire
+
+jobs:
+  test:
+    name: Unit tests + simulation
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import project
+        run: godot --headless --editor --quit --path . || true
+      - name: Unit tests
+        run: godot --headless --path . -s tests/run_tests.gd
+      - name: Balance simulation (bot must reach $1B)
+        run: |
+          godot --headless --path . -s tests/smoke_sim.gd | tee sim.log
+          grep -q "SMOKE OK" sim.log
+          ! grep -q "SCRIPT ERROR" sim.log
+
+  export:
+    name: Export ${{ matrix.preset }}
+    needs: test
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - preset: "Linux"
+            dir: linux
+            file: MoneyEmpire.x86_64
+          - preset: "Windows Desktop"
+            dir: windows
+            file: MoneyEmpire.exe
+          - preset: "Web"
+            dir: web
+            file: index.html
+          - preset: "Android"
+            dir: android
+            file: MoneyEmpire.apk
+          - preset: "Linux Dedicated Server"
+            dir: server
+            file: MoneyEmpireServer.x86_64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up export templates
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+      - name: Set up Android SDK path + signing keystore
+        if: matrix.dir == 'android'
+        run: |
+          keytool -genkeypair -v -keystore $GITHUB_WORKSPACE/ci.keystore -storepass android -alias androiddebugkey \
+            -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Money Empire,O=Money Empire,C=US"
+          mkdir -p ~/.config/godot
+          JAVA_HOME_DIR=$(dirname $(dirname $(readlink -f $(which java))))
+          echo "Java at $JAVA_HOME_DIR"
+          for f in editor_settings-4.tres editor_settings-4.3.tres; do
+            printf '%s\n' '[gd_resource type="EditorSettings" format=3]' '' '[resource]' \
+              'export/android/android_sdk_path = "/usr/lib/android-sdk"' \
+              "export/android/java_sdk_path = \"$JAVA_HOME_DIR\"" \
+              "export/android/debug_keystore = \"$GITHUB_WORKSPACE/ci.keystore\"" \
+              'export/android/debug_keystore_user = "androiddebugkey"' \
+              'export/android/debug_keystore_pass = "android"' > ~/.config/godot/$f
+          done
+          echo "GODOT_ANDROID_KEYSTORE_RELEASE_PATH=$GITHUB_WORKSPACE/ci.keystore" >> $GITHUB_ENV
+          echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=androiddebugkey" >> $GITHUB_ENV
+          echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=android" >> $GITHUB_ENV
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_PATH=$GITHUB_WORKSPACE/ci.keystore" >> $GITHUB_ENV
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey" >> $GITHUB_ENV
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android" >> $GITHUB_ENV
+      - name: Import
+        run: godot --headless --editor --quit --path . || true
+      - name: Export
+        run: |
+          mkdir -v -p builds/${{ matrix.dir }}
+          godot --headless --path . --export-release "${{ matrix.preset }}" builds/${{ matrix.dir }}/${{ matrix.file }} 2>&1 | tee export.log
+          ls -la builds/${{ matrix.dir }}
+          if [ ! -s builds/${{ matrix.dir }}/${{ matrix.file }} ]; then
+            grep -iE "error|fail|missing|invalid|keystore|sdk|template" export.log | head -30 | while IFS= read -r line; do echo "::error::$line"; done
+            exit 1
+          fi
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.EXPORT_NAME }}-${{ matrix.dir }}
+          path: builds/${{ matrix.dir }}
+
+  pages:
+    name: Deploy website + browser build
+    if: always() && needs.test.result == 'success' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    needs: [test, export]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: MoneyEmpire-web
+          path: web-build
+      - name: Assemble site
+        run: |
+          mkdir -p public/play public/screenshots public/assets
+          cp site/index.html public/
+          cp -r web-build/* public/play/
+          cp docs/screenshots/*.png public/screenshots/ || true
+          cp -r assets/art assets/marketing public/assets/
+          touch public/.nojekyll
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          force_orphan: true
+
+  release:
+    name: GitHub Release
+    # Every push to main publishes/updates the release for the version in project.godot.
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    needs: export
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - name: Package downloads
+        run: |
+          mkdir -p upload
+          cp dist/MoneyEmpire-android/MoneyEmpire.apk upload/
+          cp dist/MoneyEmpire-windows/MoneyEmpire.exe upload/
+          cp dist/MoneyEmpire-linux/MoneyEmpire.x86_64 upload/
+          cp dist/MoneyEmpire-server/MoneyEmpireServer.x86_64 upload/
+          chmod +x upload/MoneyEmpire.x86_64 upload/MoneyEmpireServer.x86_64
+          for d in android windows linux web; do (cd dist/MoneyEmpire-$d && zip -r ../../upload/MoneyEmpire-$d.zip .); done
+          cp assets/marketing/github_social_preview.png upload/
+          ls -la upload
+          VER=$(grep -oP 'config/version="\K[^"]+' project.godot)
+          echo "TAG=v$VER" >> $GITHUB_ENV
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: Money Empire ${{ env.TAG }}
+          target_commitish: ${{ github.sha }}
+          files: upload/*
+          overwrite_files: true
+          body_path: .github/release_notes.md
+          prerelease: false
+          make_latest: true
