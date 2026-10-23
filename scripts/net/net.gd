@@ -1,8 +1,12 @@
 extends Node
-## Net — ENet multiplayer for up to 100 players.
-##   * Host (listen server) from the in-game phone
-##   * Join by IP
+## Net — WebSocket multiplayer for up to 100 players, on EVERY platform:
+## browser (GitHub Pages), Windows, Linux, macOS and Android all join the same server.
+##   * Host (listen server) from the in-game phone (desktop/Android — browsers can't host)
+##   * Join by IP / host name / ws:// or wss:// URL
 ##   * Headless dedicated server:  godot --headless -- --server [--port 7777]
+##     (also reads $PORT, and --tls-cert/--tls-key for wss:// without a proxy)
+## Browsers on an https page (like GitHub Pages) can only reach secure wss:// servers —
+## see docs/MULTIPLAYER.md for a free one-click deploy that provides wss.
 ## The server is authoritative for the shared world: economy phase, stock prices, clock, chat,
 ## money transfers and the online leaderboard. Each player's wallet is simulated on their own
 ## device; the server sanity-checks reported net worth and kicks peers that spike impossibly.
@@ -12,6 +16,9 @@ signal chat(from_name: String, text: String, kind: String)
 signal status_changed(text: String)
 
 const DEFAULT_PORT := 7777
+## Public server the "Join Official Server" button uses. Empty = none deployed yet.
+## Set this after deploying (docs/MULTIPLAYER.md), e.g. "wss://money-empire-server.onrender.com"
+const OFFICIAL_SERVER := ""
 const MAX_PLAYERS := 100
 const STATE_HZ := 10.0
 const ECON_SYNC_SECONDS := 5.0
@@ -31,6 +38,9 @@ var _econ_t := 0.0
 var _chat_t := {}            # peer -> last chat time
 var _nw_seen := {}           # peer -> {"t": msec, "nw": float}
 var _strikes := {}
+var _tls_cert := ""
+var _tls_key := ""
+var last_address := ""
 
 
 func _ready() -> void:
@@ -43,9 +53,17 @@ func _ready() -> void:
 	var args := OS.get_cmdline_user_args() + OS.get_cmdline_args()
 	if "--server" in args or OS.has_feature("dedicated_server"):
 		dedicated = true
+		if OS.get_environment("PORT") != "":
+			port = int(OS.get_environment("PORT"))
 		var i := args.find("--port")
 		if i >= 0 and i + 1 < args.size():
 			port = int(args[i + 1])
+		i = args.find("--tls-cert")
+		if i >= 0 and i + 1 < args.size():
+			_tls_cert = args[i + 1]
+		i = args.find("--tls-key")
+		if i >= 0 and i + 1 < args.size():
+			_tls_key = args[i + 1]
 
 
 # ------------------------------------------------------------- state queries
@@ -88,10 +106,25 @@ func _my_info() -> Dictionary:
 
 
 # ------------------------------------------------------------- connect / leave
+func can_host() -> bool:
+	return not OS.has_feature("web")
+
+
 func host(p_port: int = DEFAULT_PORT) -> String:
 	leave()
-	var peer := ENetMultiplayerPeer.new()
-	var err := peer.create_server(p_port, MAX_PLAYERS)
+	if not can_host():
+		_set_status("Browsers can't host a server. Join one instead, or host from the PC/Android app.")
+		return status
+	var peer := WebSocketMultiplayerPeer.new()
+	var tls: TLSOptions = null
+	if _tls_cert != "" and _tls_key != "":
+		var cert := X509Certificate.new()
+		var key := CryptoKey.new()
+		if cert.load(_tls_cert) == OK and key.load(_tls_key) == OK:
+			tls = TLSOptions.server(key, cert)
+		else:
+			push_warning("[net] could not load TLS cert/key — serving plain ws://")
+	var err := peer.create_server(p_port, "*", tls)
 	if err != OK:
 		_set_status("Could not host on port %d (error %d)." % [p_port, err])
 		return status
@@ -99,21 +132,58 @@ func host(p_port: int = DEFAULT_PORT) -> String:
 	players.clear()
 	if not dedicated:
 		players[1] = _my_info()
-	_set_status(("Dedicated server" if dedicated else "Hosting") + " on port %d — up to %d players." % [p_port, MAX_PLAYERS])
+	_set_status(("Dedicated server" if dedicated else "Hosting") + " on port %d (%s) — up to %d players." % [p_port, "wss" if tls else "ws", MAX_PLAYERS])
 	players_changed.emit()
 	return status
 
 
+## Accepts "192.168.1.20", "myserver.com:7777", "ws://host:port" or "wss://host".
+static func to_url(address: String, p_port: int = DEFAULT_PORT) -> String:
+	var a := address.strip_edges()
+	if a.begins_with("ws://") or a.begins_with("wss://"):
+		return a
+	if a.begins_with("https://"):
+		return "wss://" + a.substr(8)
+	if a.begins_with("http://"):
+		return "ws://" + a.substr(7)
+	if a.contains(":") and not a.begins_with("["):
+		return "ws://" + a
+	return "ws://%s:%d" % [a, p_port]
+
+
 func join(address: String, p_port: int = DEFAULT_PORT) -> String:
 	leave()
-	var peer := ENetMultiplayerPeer.new()
-	var err := peer.create_client(address.strip_edges(), p_port)
+	var url := to_url(address, p_port)
+	if OS.has_feature("web") and url.begins_with("ws://") and _page_is_https() and not _is_local(url):
+		_set_status("This page is https, so browsers only allow secure wss:// servers. Use the server's wss:// address.")
+		return status
+	var peer := WebSocketMultiplayerPeer.new()
+	var err := peer.create_client(url)
 	if err != OK:
-		_set_status("Could not connect (error %d)." % err)
+		_set_status("Could not connect to %s (error %d)." % [url, err])
 		return status
 	multiplayer.multiplayer_peer = peer
-	_set_status("Connecting to %s:%d ..." % [address, p_port])
+	last_address = address
+	_set_status("Connecting to %s ..." % url)
 	return status
+
+
+func _page_is_https() -> bool:
+	if not OS.has_feature("web"):
+		return false
+	return str(JavaScriptBridge.eval("location.protocol", true)) == "https:"
+
+
+func _is_local(url: String) -> bool:
+	return url.contains("://localhost") or url.contains("://127.0.0.1")
+
+
+## Reads ?server=... (and ?join=1) from the page URL on the web build.
+func web_param(key: String) -> String:
+	if not OS.has_feature("web"):
+		return ""
+	var v = JavaScriptBridge.eval("new URLSearchParams(location.search).get('%s') || ''" % key, true)
+	return str(v) if v != null else ""
 
 
 func leave() -> void:
@@ -131,8 +201,9 @@ func _on_connected() -> void:
 	_register.rpc_id(1, _my_info())
 
 
-func _on_peer_connected(_id: int) -> void:
-	pass  # wait for _register
+func _on_peer_connected(id: int) -> void:
+	if multiplayer.is_server() and players.size() >= MAX_PLAYERS + (0 if dedicated else 1):
+		multiplayer.multiplayer_peer.disconnect_peer(id)   # server full
 
 
 func _on_peer_disconnected(id: int) -> void:

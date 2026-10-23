@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 — cross-platform multiplayer
+- Multiplayer switched from ENet (UDP) to **WebSockets**: the browser build can now play online with PC and Android players.
+- `wss://` support, TLS certificates for the dedicated server, `$PORT` support, 100-player cap enforced.
+- One-click free server deploy (Render blueprint + Dockerfile in `server/`).
+- `?server=wss://…` links take friends straight to your server; **JOIN OFFICIAL SERVER** button when `OFFICIAL_SERVER` is set.
+- Browser + native multiplayer verified end-to-end.
+
 ## 0.1.0 — first playable (October 2026)
 
 **Core loop**

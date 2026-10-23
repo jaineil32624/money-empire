@@ -20,6 +20,10 @@ var _orbit := 0.0
 
 
 func _ready() -> void:
+	var nettest := Net.web_param("nettest")
+	if nettest != "":
+		_nettest(nettest)   # browser networking check without the 3D world (used for CI/testing)
+		return
 	if Net.dedicated:
 		_run_dedicated()
 		return
@@ -48,6 +52,10 @@ func _ready() -> void:
 	title.new_game_pressed.connect(_on_new)
 	title.online_pressed.connect(_on_online)
 	show_title()
+	var web_auto := Net.web_param("autojoin")
+	if web_auto != "":
+		_autojoin(web_auto)
+		return
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--tour="):
 			_tour(a.substr(7))
@@ -108,6 +116,11 @@ func _on_online(player_name: String) -> void:
 	else:
 		Game.new_game(player_name)
 	start_game()
+	var url_server := Net.web_param("server")
+	if url_server != "":
+		Net.join(url_server)
+	elif Net.OFFICIAL_SERVER != "":
+		Net.join(Net.OFFICIAL_SERVER)
 	phone.open("online")
 
 
@@ -174,13 +187,32 @@ func _quickshot(path: String) -> void:
 	get_tree().quit()
 
 
+# ------------------------------------------------------------- browser networking check
+func _nettest(addr: String) -> void:
+	Game.new_game("Web%d" % (randi() % 1000))
+	Game.running = true
+	Net.join(addr)
+	for i in 600:
+		await get_tree().process_frame
+		if Net.is_online() and Net.players.size() > 0:
+			break
+	print("[nettest] online=%s players=%d" % [Net.is_online(), Net.players.size()])
+	Net.send_chat("hello from the browser build")
+	await get_tree().create_timer(20.0).timeout
+	for id in Net.players:
+		if id != Net.my_id():
+			Net.send_money(id, 25.0)
+	await get_tree().create_timer(5.0).timeout
+	print("[nettest] players=%d chat_log=%d cash=%.0f" % [Net.players.size(), Net.chat_log.size(), Game.sim.cash])
+	print("NETTEST OK" if Net.is_online() and Net.chat_log.size() > 0 else "NETTEST FAIL")
+
+
 # ------------------------------------------------------------- network smoke test client
 ## godot --headless --path . -- --autojoin=127.0.0.1:7777   (used by CI / local testing)
 func _autojoin(addr: String) -> void:
-	var parts := addr.split(":")
-	Game.new_game("Bot%d" % (randi() % 1000))
+	Game.new_game(("Web" if OS.has_feature("web") else "Bot") + "%d" % (randi() % 1000))
 	start_game()
-	Net.join(parts[0], int(parts[1]) if parts.size() > 1 else Net.DEFAULT_PORT)
+	Net.join(addr)
 	for i in 300:
 		await get_tree().process_frame
 		if Net.is_online() and Net.players.size() > 0:
@@ -195,7 +227,8 @@ func _autojoin(addr: String) -> void:
 	await get_tree().create_timer(2.0).timeout
 	print("[autojoin] players=%d chat_log=%d cash=%.0f remote_avatars=%d" % [Net.players.size(), Net.chat_log.size(), Game.sim.cash, world.remote.size()])
 	print("AUTOJOIN OK" if Net.is_online() and Net.chat_log.size() > 0 else "AUTOJOIN FAIL")
-	get_tree().quit()
+	if not OS.has_feature("web"):
+		get_tree().quit()
 
 
 # ------------------------------------------------------------- screenshot tour (marketing/docs)

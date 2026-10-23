@@ -1,19 +1,52 @@
 # Multiplayer
 
-Money Empire uses Godot's high-level multiplayer API over **ENet (UDP)**. One server, up to
-**100 players**, one shared economy.
+Money Empire uses Godot's high-level multiplayer API over **WebSockets**, so **every version
+plays together**: the browser build on GitHub Pages, Windows, Linux, macOS and Android. One server,
+up to **100 players**, one shared economy.
 
-## Ways to play
+## Quick start
 
-| Mode | How |
+| You want to… | Do this |
 |---|---|
-| **Host** (listen server) | Phone → Online → **Host**. You play and serve at the same time. |
-| **Join** | Phone → Online → enter the host's IP → **Join**. |
-| **Dedicated server** | `./MoneyEmpireServer.x86_64 --headless -- --server --port 7777` (from the release), or from source: `godot --headless --path . -- --server` |
+| Play with friends on the same Wi-Fi | One person on **PC or Android**: Phone → Online → **Host**. Others: Phone → Online → type the host's local IP (e.g. `192.168.1.20`) → **Join**. |
+| Play over the internet, including **browser** players | Deploy the free dedicated server (below), then everyone joins its `wss://` address. |
+| Send friends a one-click link | `https://jaineil32624.github.io/money-empire/play/?server=wss://YOUR-SERVER` — they press **PLAY ONLINE** and land on your server. |
 
-- LAN: join with the host's local IP (e.g. `192.168.1.20`).
-- Internet: forward **UDP 7777** on the host's router, or run the dedicated server on a cloud VM (any $5/month Linux box handles 100 players; the server runs no rendering).
-- The **browser build can't host or join** — browsers don't allow raw UDP. A WebSocket/WebRTC transport is on the roadmap.
+> **Why browsers need `wss://`:** GitHub Pages is served over https, and browsers refuse insecure
+> `ws://` connections from https pages. A hosting platform with HTTPS (like Render below) gives
+> your server a `wss://` address automatically. The browser build can't *host*, only join.
+
+## Free public server in one click (Render)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/jaineil32624/money-empire)
+
+1. Click the button and sign in to Render (free, GitHub login works).
+2. It reads `render.yaml` and builds `server/Dockerfile`, which downloads `MoneyEmpireServer.x86_64` from the latest release.
+3. When it shows **Live**, copy the URL, e.g. `https://money-empire-server.onrender.com`.
+4. Your server address is the same with `wss://`: **`wss://money-empire-server.onrender.com`**.
+5. (Optional) Put it in `scripts/net/net.gd` → `OFFICIAL_SERVER` and push — every copy of the game then shows a **JOIN OFFICIAL SERVER** button.
+
+Free Render services sleep after ~15 minutes with nobody connected; the first player to join
+wakes it up (~30–60 s). Paid plans (or Railway / Fly.io / Koyeb with the same Dockerfile) stay awake.
+
+## Other ways to run the server
+
+```bash
+# From the release (Linux):
+./MoneyEmpireServer.x86_64 --headless -- --server --port 7777
+
+# From source:
+godot --headless --path . -- --server --port 7777
+
+# Docker:
+docker build -t money-empire-server server/ && docker run -p 7777:7777 money-empire-server
+
+# Your own TLS certificate (wss:// without a proxy):
+./MoneyEmpireServer.x86_64 --headless -- --server --port 443 --tls-cert fullchain.pem --tls-key privkey.pem
+```
+
+The server also honours the `PORT` environment variable. Native clients can join a plain
+server by IP (`ws://`), forward **TCP 7777** for internet play.
 
 ## What the server owns
 
@@ -25,33 +58,25 @@ Money Empire uses Godot's high-level multiplayer API over **ENet (UDP)**. One se
 | Chat (rate limited, length capped) | |
 | Money transfers (validated against your last reported cash) | |
 | Corporations & the online leaderboard | |
-| Net-worth sanity checks (anti-cheat) | |
+| Net-worth sanity checks (anti-cheat), 100-player cap | |
 
 Every 5 seconds the server broadcasts the economy snapshot; clients overwrite their local
 economy and stock market with it, so a crash hits everyone at the same moment.
 
 ## Anti-cheat
 
-- The server tracks each player's reported net worth over time. Growth faster than
-  `1.5× per second + $2M/s` is rejected (the old value is kept) and counts as a strike.
-  Three strikes → disconnected.
+- Reported net worth growing faster than `1.5× per second + $2M/s` is rejected and counts as a strike; three strikes → disconnected.
 - Transfers are capped and must not exceed the sender's last reported cash.
 - Names and chat are sanitized; chat is rate limited.
-- Single-player saves are signed (SHA-256 with a salt). Edited saves are rejected and backed up.
+- Single-player saves are signed (SHA-256 + salt); edited saves are rejected and backed up.
 
-This stops casual cheating. For a competitive public release, move wallets fully server-side
-(the `EmpireSim` class is already node-free, so the server can run one per player).
+For ranked public servers, move wallets fully server-side (`EmpireSim` is node-free, so the server can run one per player).
 
-## Trading & teams
+## Tested
 
-- **Send money:** Phone → Online → pick an amount → **Send** on a player row.
-- **Corporations:** Phone → Empire → type a name → **Form / Join**. Everyone using the same
-  name is on the same team; the Leaderboard tab shows a corporate ranking.
-
-## Voice chat
-
-Not in v0.1. Planned: Steam Voice on Steam builds and WebRTC elsewhere, with proximity audio.
-Text chat works now (press **T**).
+`--autojoin=ADDRESS` (or `?autojoin=ADDRESS` in the browser build) starts a bot that joins,
+chats and sends money. A dedicated server with two native bots and the **web build running in
+Chromium** was verified: all saw each other, chat was relayed and transfers settled.
 
 ## Protocol summary (`scripts/net/net.gd`)
 
@@ -59,9 +84,11 @@ Text chat works now (press **T**).
 |---|---|---|
 | `_register(info)` | client → server | reliable |
 | `_sync_players(players)` | server → all | reliable |
-| `_push_state(pos, yaw, vehicle, networth, cash)` | client → server | unreliable ordered, 10 Hz |
-| `_world_state(states)` | server → all | unreliable ordered, 10 Hz |
+| `_push_state(pos, yaw, vehicle, networth, cash)` | client → server | 10 Hz |
+| `_world_state(states)` | server → all | 10 Hz |
 | `_econ_sync(snapshot)` | server → all | reliable, every 5 s + on join |
 | `_chat_req` / `_chat_msg` | client → server → all | reliable |
 | `_transfer_req` / `_transfer_done` / `_receive_money` | client → server → both | reliable |
 | `_company_req` | client → server | reliable |
+
+Voice chat is on the roadmap.

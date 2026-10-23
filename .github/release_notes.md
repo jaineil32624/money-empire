@@ -8,7 +8,7 @@
 | 📱 Android | `MoneyEmpire.apk` — allow "Install unknown apps" for your browser / file manager |
 | 🪟 Windows | `MoneyEmpire.exe` — single file, just run it (SmartScreen: *More info → Run anyway*) |
 | 🐧 Linux | `MoneyEmpire.x86_64` — `chmod +x` then run |
-| 🖥️ Dedicated server | `MoneyEmpireServer.x86_64 -- --server --port 7777` (headless, up to 100 players) |
+| 🖥️ Dedicated server | `MoneyEmpireServer.x86_64 --headless -- --server --port 7777` (WebSocket, up to 100 players) — or [deploy free on Render](https://render.com/deploy?repo=https://github.com/jaineil32624/money-empire) |
 | 🌐 Web | `MoneyEmpire-web.zip` — host on any static server |
 | 📦 Source | *Source code (zip)* — open `project.godot` in Godot 4.3 |
 

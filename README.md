@@ -81,8 +81,11 @@ Corner store robbery, phone scams, harbor smuggling, the Monolith Bank heist. Ma
 ### 🏆 Endgame
 At $1B: **build your skyscraper**, **launch a rocket**, **IPO your corporation**, raise a **golden statue** — all appear in the city. Then chase **$1 Trillion**.
 
-### 🌐 Multiplayer (up to 100 players)
-- Host, join by IP, or run a **headless dedicated server**
+### 🌐 Multiplayer (up to 100 players, cross-platform)
+- **Browser, Windows, Linux and Android players in the same city** (WebSockets)
+- Host from PC/Android, join by IP or `wss://` address, or run a **headless dedicated server**
+- **Free public server in one click:** [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/jaineil32624/money-empire)
+- Share a link that drops friends onto your server: `…/money-empire/play/?server=wss://your-server`
 - **Shared economy:** everyone lives through the same boom and crash, same stock prices, same clock
 - Text chat, **send money**, **corporations** (teams) with a corporate leaderboard
 - Server-side **anti-cheat** on net worth growth and transfers · details in [docs/MULTIPLAYER.md](docs/MULTIPLAYER.md)
@@ -120,7 +123,7 @@ tests/                       ← 418 unit tests + a balance bot that must reach 
 ```bash
 godot --headless --path . -s tests/run_tests.gd    # 418 unit tests
 godot --headless --path . -s tests/smoke_sim.gd    # balance bot: $100 → $1B
-godot --headless --path . -- --server              # dedicated server on UDP 7777
+godot --headless --path . -- --server              # dedicated WebSocket server on port 7777
 ```
 
 ## 📦 Builds & CI
@@ -133,7 +136,6 @@ Publishing to stores: [docs/STEAM.md](docs/STEAM.md) (Steam, consoles, Google Pl
 - [ ] **VR mode** (OpenXR) — walk your mansion and trading floor in VR
 - [ ] Voice chat (Steam Voice / WebRTC proximity audio)
 - [ ] Server-side wallets for ranked public servers
-- [ ] WebSocket transport so the browser build can play online
 - [ ] Steamworks: achievements, lobbies, cloud saves
 - [ ] Hired NPC workers visible inside businesses
 - [ ] Building interiors (trading floor, casino, nightclub)

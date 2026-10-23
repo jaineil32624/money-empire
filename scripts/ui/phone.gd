@@ -501,20 +501,33 @@ func _tab_online() -> void:
 	nh.add_child(name_le)
 	content.add_child(nh)
 	if not Net.is_online():
+		var official := Net.OFFICIAL_SERVER
+		var from_url := Net.web_param("server")
+		if from_url != "":
+			official = from_url
+		if official != "":
+			var ob := K.button("JOIN OFFICIAL SERVER", func(): Net.join(official); _rebuild.call_deferred(), K.GREEN)
+			ob.custom_minimum_size.y = 52
+			content.add_child(ob)
 		var hh := K.hbox(8)
 		var ip := LineEdit.new()
-		ip.placeholder_text = "Server IP (e.g. 192.168.1.20)"
-		ip.text = "127.0.0.1"
+		ip.placeholder_text = "IP, host:port, or wss:// server address"
+		ip.text = Net.last_address if Net.last_address != "" else (official if official != "" else ("" if OS.has_feature("web") else "127.0.0.1"))
 		ip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		hh.add_child(ip)
 		var port := LineEdit.new()
 		port.text = str(Net.DEFAULT_PORT)
 		port.custom_minimum_size.x = 90
+		port.tooltip_text = "Port (ignored when the address is a ws:// or wss:// URL)"
 		hh.add_child(port)
 		hh.add_child(K.button("Join", func(): Net.join(ip.text, int(port.text)); _rebuild.call_deferred(), K.GREEN))
-		hh.add_child(K.button("Host", func(): Net.host(int(port.text)); _rebuild.call_deferred(), K.GOLD))
+		if Net.can_host():
+			hh.add_child(K.button("Host", func(): Net.host(int(port.text)); _rebuild.call_deferred(), K.GOLD))
 		content.add_child(hh)
-		_note("Host on your PC and friends on the same Wi-Fi join with your local IP. For internet play, forward UDP port 7777 or run the dedicated server (see docs/MULTIPLAYER.md). The browser build can't host or join (browsers block raw UDP).")
+		_note("Works across every version — browser, Windows, Linux and Android players can all be in the same city.\n"
+			+ "• Same Wi-Fi: one PC/Android player taps Host, others join with that device's local IP (e.g. 192.168.1.20).\n"
+			+ "• Browser players need a secure server address (wss://...). Deploy the free dedicated server in one click — see docs/MULTIPLAYER.md — and share its link.\n"
+			+ "• Share a link: add ?server=wss://your-server to the game URL and friends land on the right server.")
 	else:
 		content.add_child(K.button("Leave server", func(): Net.leave(); _rebuild.call_deferred(), K.RED))
 		var ah := K.hbox(8)
@@ -533,7 +546,7 @@ func _tab_online() -> void:
 				[{"text": func(): return "Send " + _m(_send_amount), "do": func():
 					var err := Net.send_money(pid, _send_amount)
 					return {"ok": err == "", "msg": "Sending..." if err == "" else err}, "enabled": func(): return s.cash >= _send_amount}], K.BLUE)
-	_note("Voice chat is on the roadmap (Steam Voice / WebRTC). Text chat: press T or the CHAT button.", K.MUTED)
+	_note("Text chat: press T or the CHAT button. Voice chat is on the roadmap.", K.MUTED)
 
 
 # ------------------------------------------------------------- SHOP

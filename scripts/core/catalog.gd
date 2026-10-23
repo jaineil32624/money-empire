@@ -3,7 +3,7 @@ extends RefCounted
 ## Every number that defines the economy lives here so balance can be tuned in one place.
 ## Rows are plain dictionaries so they serialize and mod easily.
 
-const VERSION := "0.1.0"
+const VERSION := "0.2.0"
 const GOAL := 1_000_000_000.0            # $1 Billion — the headline goal
 const STRETCH_GOAL := 1_000_000_000_000.0  # $1 Trillion — the online race
 const START_CASH := 100.0

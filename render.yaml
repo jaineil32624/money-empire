@@ -1,0 +1,9 @@
+# One-click public server: https://render.com/deploy?repo=https://github.com/jaineil32624/money-empire
+services:
+  - type: web
+    name: money-empire-server
+    runtime: docker
+    plan: free
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    autoDeploy: true
