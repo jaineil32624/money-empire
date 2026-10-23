@@ -198,7 +198,11 @@ func _nettest(addr: String) -> void:
 			break
 	print("[nettest] online=%s players=%d" % [Net.is_online(), Net.players.size()])
 	Net.send_chat("hello from the browser build")
-	await get_tree().create_timer(20.0).timeout
+	for i in 120:   # stay up to ~2 min, until another player shows up
+		await get_tree().create_timer(1.0).timeout
+		if Net.players.size() >= 2:
+			await get_tree().create_timer(3.0).timeout
+			break
 	for id in Net.players:
 		if id != Net.my_id():
 			Net.send_money(id, 25.0)
