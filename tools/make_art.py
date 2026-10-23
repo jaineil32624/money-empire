@@ -127,7 +127,7 @@ def infographic():
   <div style='font-size:17px;line-height:1.45;color:#c9d2e3'>{d}</div>
   <div style='margin-top:16px;font-size:20px;font-weight:800;color:{c}'>{m}</div>
 </div>""" for n, t, d, m, c in steps)
-    return page(1600, 520, f"""
+    return page(1600, 440, f"""
 <div style='padding:40px 46px'>
   <div style='display:flex;align-items:baseline;gap:18px;margin-bottom:26px'>
     <div style='font-size:40px;font-weight:900' class='gold'>The road to a billion</div>
@@ -158,7 +158,7 @@ def main():
         render(pg, hero(1024, 500, bg2, 96, 24, True, 15), 1024, 500, os.path.join(MKT, "play_store_feature_graphic.png"))
         render(pg, hero(920, 430, bg, 92, 22, False), 920, 430, os.path.join(MKT, "steam_header_capsule.png"))
         render(pg, hero(1920, 640, bg, 150, 36), 1920, 640, os.path.join(ART, "banner_wide.png"))
-        render(pg, infographic(), 1600, 520, os.path.join(ART, "progression.png"))
+        render(pg, infographic(), 1600, 440, os.path.join(ART, "progression.png"))
         b.close()
 
 

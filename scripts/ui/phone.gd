@@ -438,7 +438,7 @@ func _tab_empire() -> void:
 	_h("Empire", "Your fortune at a glance, endgame mega-projects, and your corporation.")
 	var chart := W.Sparkline.new()
 	chart.custom_minimum_size = Vector2(0, 110)
-	chart.set_values(s.networth_history + [s.networth()])
+	chart.set_values((s.networth_history + [s.networth()]).map(func(v): return log(maxf(1.0, float(v))) / log(10.0)))   # log scale
 	content.add_child(chart)
 	_note("Net worth %s  ·  Cash %s  ·  Prestige %d  ·  Day %d%s" % [_m(s.networth()), _m(s.cash), s.prestige(), s.day, ("  ·  Billionaire on day %d" % s.billionaire_day) if s.billionaire_day > 0 else ""], K.TEXT, 17)
 	_note("Earned  ·  Jobs %s  ·  Business %s  ·  Rent %s  ·  Stocks %s  ·  Crime %s  ·  Paid: salaries %s, fines %s" % [

@@ -38,7 +38,7 @@ You wake up on a downtown sidewalk with **$100**, no car and no home. Everything
 | ![First job](docs/screenshots/02_first_job.png) | ![Hypercar](docs/screenshots/04_hypercar.png) |
 | **Your mansion (pool, helipad, garage)** | **Night flight over the harbor** |
 | ![Mansion](docs/screenshots/05_mansion.png) | ![Night](docs/screenshots/06_night_heli.png) |
-| **Endgame: skyscraper, rocket & statue** | **The Harbor** |
+| **Endgame: your Empire Tower** | **The Harbor** |
 | ![Endgame](docs/screenshots/07_endgame.png) | ![Harbor](docs/screenshots/08_harbor.png) |
 | **Business empire** | **Live stock market** |
 | ![Business](docs/screenshots/09_phone_business.png) | ![Stocks](docs/screenshots/10_phone_stocks.png) |
