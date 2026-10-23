@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Money Empire — Start Broke, Become a Billionaire</title>
+<meta name="description" content="A 3D multiplayer money-making sim built in Godot 4. Start homeless with $100, work jobs, buy businesses, flip houses, trade stocks and race everyone to $1 Billion.">
+<meta property="og:title" content="Money Empire — Start Broke, Become a Billionaire">
+<meta property="og:description" content="Work, build, invest and race 100 players to $1 Billion. Play free in your browser or on Android.">
+<meta property="og:image" content="https://jaineil32624.github.io/money-empire/assets/marketing/github_social_preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0b111c">
+<link rel="icon" href="assets/marketing/app_icon_192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b111c;--panel:#131c2e;--panel2:#1a2540;--line:#2a3a5c;
+  --gold:#f5c542;--gold-d:#b07d00;--green:#2ecc71;--red:#ff5c5c;--blue:#4f8cff;--purple:#b388ff;--pink:#ff6fb5;
+  --text:#e8edf5;--muted:#8a96ab;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font:16px/1.6 Inter,system-ui,sans-serif;overflow-x:hidden}
+a{color:inherit}
+img{max-width:100%;display:block}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+h1,h2,h3{font-family:Poppins,Inter,sans-serif;line-height:1.05;letter-spacing:-.01em}
+.eyebrow{font:800 13px/1 Poppins,sans-serif;letter-spacing:.18em;color:var(--green);text-transform:uppercase}
+
+/* nav */
+nav{position:sticky;top:0;z-index:20;background:rgba(11,17,28,.82);backdrop-filter:blur(10px);border-bottom:1px solid rgba(42,58,92,.6)}
+nav .wrap{display:flex;align-items:center;gap:18px;height:62px}
+.brand{display:flex;align-items:center;gap:10px;font:900 19px Poppins,sans-serif;color:var(--gold);text-decoration:none}
+.brand img{width:34px;height:34px;border-radius:9px}
+nav .links{margin-left:auto;display:flex;gap:22px;font-weight:600;font-size:15px}
+nav .links a{text-decoration:none;color:var(--muted)}
+nav .links a:hover{color:var(--text)}
+@media(max-width:760px){nav .links a:not(.cta){display:none}}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 22px;border-radius:14px;font:800 16px Poppins,sans-serif;text-decoration:none;border:1px solid transparent;transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-2px)}
+.btn-gold{background:linear-gradient(180deg,#ffd75e,var(--gold));color:#2b1d00;box-shadow:0 6px 0 var(--gold-d),0 14px 30px rgba(245,197,66,.25)}
+.btn-gold:hover{box-shadow:0 8px 0 var(--gold-d),0 18px 40px rgba(245,197,66,.35)}
+.btn-ghost{background:rgba(255,255,255,.06);border-color:var(--line);color:var(--text)}
+.btn-ghost:hover{border-color:var(--blue)}
+nav .cta{padding:8px 14px;border-radius:10px;background:var(--gold);color:#2b1d00 !important}
+
+/* hero */
+.hero{position:relative;overflow:hidden;min-height:640px;display:flex;align-items:center}
+.hero-bg{position:absolute;inset:0;background:url(screenshots/04_hypercar.png) center/cover no-repeat}
+.hero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,17,28,.97) 0%,rgba(11,17,28,.86) 45%,rgba(11,17,28,.25) 80%,rgba(11,17,28,.05)),linear-gradient(0deg,var(--bg) 0%,transparent 30%)}
+.hero .wrap{position:relative;padding-top:60px;padding-bottom:80px}
+.hero h1{font-size:clamp(64px,11vw,132px);font-weight:900;color:var(--gold);line-height:.86;margin:14px 0 22px;text-shadow:0 6px 0 #6b4a00,0 18px 50px rgba(0,0,0,.6)}
+.hero p.lead{font-size:clamp(18px,2.2vw,22px);max-width:560px;color:#d6deeb}
+.hero p.lead b{color:var(--gold)}
+.hero .ctas{display:flex;flex-wrap:wrap;gap:14px;margin-top:30px}
+.stats{display:flex;flex-wrap:wrap;gap:26px;margin-top:38px}
+.stat b{display:block;font:900 30px Poppins,sans-serif;color:var(--text)}
+.stat span{color:var(--muted);font-size:14px}
+
+/* ticker */
+.ticker{background:#070b13;border-block:1px solid var(--line);overflow:hidden;white-space:nowrap;font:600 15px Inter,sans-serif}
+.ticker div{display:inline-block;padding:10px 0;animation:tick 40s linear infinite}
+.ticker span{margin:0 26px}
+.up{color:var(--green)}.dn{color:var(--red)}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.ticker div{animation:none}}
+
+section{padding:90px 0}
+.sec-head{max-width:720px;margin-bottom:40px}
+.sec-head h2{font-size:clamp(34px,5vw,52px);font-weight:900;margin:10px 0 12px}
+.sec-head p{color:var(--muted);font-size:18px}
+
+/* loop */
+.loop img{border-radius:20px;border:1px solid var(--line)}
+
+/* features */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px;position:relative;overflow:hidden}
+.card .ico{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font:900 22px Poppins,sans-serif;margin-bottom:14px}
+.card h3{font-size:21px;margin-bottom:8px}
+.card p{color:#b9c3d6;font-size:15px}
+.card ul{margin:10px 0 0 18px;color:#b9c3d6;font-size:14px}
+
+/* gallery */
+.gallery{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.gallery figure{grid-column:span 4;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--panel);cursor:zoom-in}
+.gallery figure.wide{grid-column:span 8}
+.gallery figure img{aspect-ratio:16/9;object-fit:cover;width:100%;transition:transform .3s}
+.gallery figure:hover img{transform:scale(1.04)}
+.gallery figcaption{padding:10px 14px;font-size:14px;color:var(--muted)}
+@media(max-width:900px){.gallery figure,.gallery figure.wide{grid-column:span 6}}
+@media(max-width:560px){.gallery figure,.gallery figure.wide{grid-column:span 12}}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;z-index:50;padding:20px;cursor:zoom-out}
+.lightbox.on{display:flex}
+.lightbox img{max-height:90vh;border-radius:12px}
+
+/* economy */
+.phases{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.phase{border-radius:16px;padding:20px;border:1px solid var(--line);background:var(--panel)}
+.phase b{font:900 20px Poppins,sans-serif}
+.phase p{color:#b9c3d6;font-size:14px;margin-top:6px}
+
+/* downloads */
+.dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.dl a{display:block;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;transition:border-color .15s,transform .15s}
+.dl a:hover{border-color:var(--gold);transform:translateY(-3px)}
+.dl .plat{font:900 22px Poppins,sans-serif}
+.dl .file{color:var(--muted);font-size:14px;margin-top:4px;font-family:ui-monospace,monospace}
+.dl .go{display:inline-block;margin-top:14px;font-weight:800;color:var(--gold)}
+.dl a.play{background:linear-gradient(135deg,#2a2100,#131c2e);border-color:var(--gold)}
+
+/* faq */
+details{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin-bottom:12px}
+summary{cursor:pointer;font:700 18px Poppins,sans-serif;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";float:right;color:var(--gold)}
+details[open] summary::after{content:"–"}
+details p{color:#b9c3d6;margin-top:10px}
+code{background:#0e1626;border:1px solid var(--line);border-radius:6px;padding:2px 6px;font-size:14px}
+
+footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted);font-size:14px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <a class="brand" href="#"><img src="assets/marketing/app_icon_192.png" alt="">MONEY EMPIRE</a>
+  <div class="links">
+    <a href="#features">Features</a><a href="#gallery">Screenshots</a><a href="#economy">Economy</a><a href="#download">Download</a>
+    <a href="https://github.com/jaineil32624/money-empire">GitHub</a>
+    <a class="cta" href="play/">Play free</a>
+  </div>
+</div></nav>
+
+<header class="hero">
+  <div class="hero-bg" role="img" aria-label="A yellow hypercar on a downtown street at sunset"></div>
+  <div class="wrap">
+    <div class="eyebrow">Start broke. Die rich.</div>
+    <h1>MONEY<br>EMPIRE</h1>
+    <p class="lead">You're homeless with <b>$100</b>. Deliver packages, buy a taco stand, flip houses, trade stocks, survive market crashes — and race everyone online to <b>$1&nbsp;BILLION</b>.</p>
+    <div class="ctas">
+      <a class="btn btn-gold" href="play/">▶ Play in your browser</a>
+      <a class="btn btn-ghost" href="https://github.com/jaineil32624/money-empire/releases/latest/download/MoneyEmpire.apk">Android APK</a>
+      <a class="btn btn-ghost" href="#download">PC &amp; server</a>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>16</b><span>businesses</span></div>
+      <div class="stat"><b>10</b><span>properties</span></div>
+      <div class="stat"><b>9</b><span>vehicles</span></div>
+      <div class="stat"><b>6</b><span>stocks</span></div>
+      <div class="stat"><b>100</b><span>players online</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="ticker" aria-hidden="true"><div id="tick"></div></div>
+
+<section class="loop"><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">The loop</div><h2>Five stages from broke to legend</h2>
+  <p>Every dollar has a job. Early on you hustle; then your money works for you; then the whole city does.</p></div>
+  <img src="assets/art/progression.png" alt="Progression: Hustle, Own, Expand, Dominate, Legacy">
+</div></section>
+
+<section id="features" style="background:linear-gradient(180deg,transparent,#0e1525 30%,transparent)"><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">Features</div><h2>Everything revolves around money</h2></div>
+  <div class="grid">
+    <div class="card"><div class="ico" style="background:#123a24;color:var(--green)">$</div><h3>Real jobs, real missions</h3><p>Drive packages across downtown, race the clock on food delivery for tips, mow lawns, wash cars, haul pallets and unload cargo ships.</p></div>
+    <div class="card"><div class="ico" style="background:#3a2f0a;color:var(--gold)">B</div><h3>Build a business empire</h3><p>16 businesses from a taco stand to Starforge Aerospace. Upgrade to level 5, hire workers, earn every in-game hour.</p></div>
+    <div class="card"><div class="ico" style="background:#0f2547;color:var(--blue)">H</div><h3>Real estate &amp; flipping</h3><p>Buy, rent out, renovate and flip. Each district's market moves — buy in a crash, sell in a boom.</p></div>
+    <div class="card"><div class="ico" style="background:#2a1747;color:var(--purple)">%</div><h3>Live stock market</h3><p>AI, tech, energy, retail, real estate and space stocks move every hour with company news and charts.</p></div>
+    <div class="card"><div class="ico" style="background:#3d1530;color:var(--pink)">M</div><h3>Your mansion</h3><p>Pool, theater, trophy room, helipad, security, 10-car garage — built on your own lot. Friends can visit online.</p></div>
+    <div class="card"><div class="ico" style="background:#0b3333;color:#2ec4c4">V</div><h3>Bikes to private jets</h3><p>Cars make you faster, a helicopter flies over traffic, yachts and jets unlock fast travel.</p></div>
+    <div class="card"><div class="ico" style="background:#3d1214;color:var(--red)">!</div><h3>Optional crime</h3><p>Robberies, scams, smuggling, a bank heist. Massive payouts — but heat brings fines, jail and property seizure.</p></div>
+    <div class="card"><div class="ico" style="background:#1d2b44;color:#fff">*</div><h3>Billionaire endgame</h3><p>Build your skyscraper, launch a rocket, buy an island, IPO your corporation — then chase the first trillion.</p></div>
+    <div class="card"><div class="ico" style="background:#1a2540;color:var(--gold)">@</div><h3>Multiplayer for 100</h3><p>Browser, PC and Android players share one city, one economy and one stock market. Chat, send money, form corporations, climb the global leaderboard.</p></div>
+  </div>
+</div></section>
+
+<section id="gallery"><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">Screenshots</div><h2>Straight from the game</h2><p>Real captures from the Godot build — not concept art.</p></div>
+  <div class="gallery" id="gal"></div>
+</div></section>
+<div class="lightbox" id="lb"><img alt=""></div>
+
+<section id="economy" style="background:#0e1525"><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">A living economy</div><h2>Booms. Crashes. Opportunity.</h2><p>The economy cycles on its own — online, everyone lives through the same cycle at the same time. Inflation pushes prices up over every 60-day game year.</p></div>
+  <div class="phases">
+    <div class="phase" style="border-top:5px solid var(--green)"><b style="color:var(--green)">BOOM</b><p>Business income +25%, assets +10%, stocks rally. Sell properties into strength.</p></div>
+    <div class="phase" style="border-top:5px solid var(--blue)"><b style="color:var(--blue)">STABLE</b><p>Steady growth, normal prices. Build and upgrade.</p></div>
+    <div class="phase" style="border-top:5px solid #f0a030"><b style="color:#f0a030">RECESSION</b><p>Income −20%, property values slide. Keep cash ready.</p></div>
+    <div class="phase" style="border-top:5px solid var(--red)"><b style="color:var(--red)">MARKET CRASH</b><p>Stocks plunge, assets −28%. Fortunes are made by whoever buys now.</p></div>
+  </div>
+</div></section>
+
+<section id="download"><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">Download</div><h2>Play anywhere</h2><p>Free. No account needed. Progress saves on your device.</p></div>
+  <div class="dl">
+    <a class="play" href="play/"><div class="plat">▶ Browser</div><div class="file">instant · no install</div><span class="go">Play now →</span></a>
+    <a href="https://github.com/jaineil32624/money-empire/releases/latest/download/MoneyEmpire.apk"><div class="plat">Android</div><div class="file">MoneyEmpire.apk</div><span class="go">Download →</span></a>
+    <a href="https://github.com/jaineil32624/money-empire/releases/latest/download/MoneyEmpire.exe"><div class="plat">Windows</div><div class="file">MoneyEmpire.exe</div><span class="go">Download →</span></a>
+    <a href="https://github.com/jaineil32624/money-empire/releases/latest/download/MoneyEmpire.x86_64"><div class="plat">Linux</div><div class="file">MoneyEmpire.x86_64</div><span class="go">Download →</span></a>
+    <a href="https://github.com/jaineil32624/money-empire/releases/latest/download/MoneyEmpireServer.x86_64"><div class="plat">Dedicated server</div><div class="file">MoneyEmpireServer.x86_64</div><span class="go">Host 100 players →</span></a>
+    <a href="https://github.com/jaineil32624/money-empire"><div class="plat">Source</div><div class="file">Godot 4.3 project · MIT</div><span class="go">GitHub →</span></a>
+  </div>
+</div></section>
+
+<section style="padding-top:0"><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">FAQ</div><h2>Questions</h2></div>
+  <details><summary>Is it pay-to-win?</summary><p>No. The only things you can unlock with Empire Coins are cosmetics — skins, car paints, mansion decor and the Season Pass. Nothing changes your money, speed or rank. Real-money purchases aren't enabled in this build.</p></details>
+  <details><summary>How long does it take to become a billionaire?</summary><p>A focused player gets there in roughly 90–110 in-game days (an in-game day is 3 real minutes, and single-player can run at ×2 or ×4). Timing the market cycles gets you there faster.</p></details>
+  <details><summary>How do I play with friends?</summary><p>Everyone — browser, Windows, Linux, Android — can be in the same city. Same Wi-Fi: one PC/Android player taps Phone → Online → Host and friends join with that device's IP. Over the internet (and for browser players): deploy the free server in one click (<a href="https://render.com/deploy?repo=https://github.com/jaineil32624/money-empire">Deploy to Render</a>), then share <code>play/?server=wss://your-server</code>. Friends press PLAY ONLINE and they're in.</p></details>
+  <details><summary>Controls?</summary><p>WASD to move, Shift to run, E to interact, Tab for the phone, V to hop in your vehicle, T to chat, drag the mouse to look. Full gamepad support. On phones: joystick on the left, drag on the right to look.</p></details>
+  <details><summary>Can I mod or extend it?</summary><p>Yes — it's an MIT-licensed Godot 4.3 project. Every price and income lives in <code>scripts/core/catalog.gd</code>. See docs/GODOT.md in the repo.</p></details>
+</div></section>
+
+<footer><div class="wrap">
+  <div>© 2026 Jaineil Rana · Money Empire · MIT License</div>
+  <div>Built with Godot 4 · <a href="https://github.com/jaineil32624/money-empire">GitHub</a> · <a href="https://github.com/jaineil32624/money-empire/releases">Releases</a></div>
+</div></footer>
+
+<script>
+// stock ticker (fictional companies, decorative)
+(function(){
+  var s=[["NEUR","NeuralForge AI",120],["BYTE","ByteWave Tech",85],["VOLT","VoltGrid Energy",60],["CART","CartMax Retail",42],["BRIK","BrickStone REIT",70],["ORBT","Orbital Dynamics",25]];
+  var html="";
+  for(var r=0;r<2;r++){ s.forEach(function(x){ var ch=(Math.random()*8-3); html+='<span>'+x[0]+' $'+(x[2]*(1+ch/100)).toFixed(2)+' <b class="'+(ch>=0?'up':'dn')+'">'+(ch>=0?'+':'')+ch.toFixed(2)+'%</b></span>'; });
+    html+='<span class="up">BREAKING: economy enters BOOM phase</span><span class="dn">Smuggling bust at the Harbor — heat rising</span>'; }
+  document.getElementById("tick").innerHTML=html;
+})();
+// gallery
+(function(){
+  var shots=[["04_hypercar.png","Hypercar X1 at golden hour",1],["02_first_job.png","Day 1: your first delivery job",0],["03_downtown.png","Downtown on foot",0],
+    ["05_mansion.png","Your mansion — pool, helipad, garage",0],["06_night_heli.png","Night flight over the harbor",1],["07_endgame.png","Endgame: your Empire Tower on the skyline",1],
+    ["08_harbor.png","The Harbor at sunrise",0],["09_phone_business.png","Business empire management",0],["10_phone_stocks.png","Live stock market",0],
+    ["11_phone_realestate.png","Real estate & flipping",0],["12_phone_empire.png","Empire overview & endgame",0],["13_phone_leaderboard.png","Race the tycoons",0],
+    ["14_phone_shop.png","Cosmetics & Season Pass",0],["15_phone_crime.png","Optional crime",0],["01_title.png","Title screen",0]];
+  var g=document.getElementById("gal"), lb=document.getElementById("lb");
+  shots.forEach(function(x){
+    var f=document.createElement("figure"); if(x[2]) f.className="wide";
+    f.innerHTML='<img loading="lazy" src="screenshots/'+x[0]+'" alt="'+x[1]+'"><figcaption>'+x[1]+'</figcaption>';
+    f.querySelector("img").onerror=function(){ f.remove(); };
+    f.onclick=function(){ lb.querySelector("img").src="screenshots/"+x[0]; lb.classList.add("on"); };
+    g.appendChild(f);
+  });
+  lb.onclick=function(){ lb.classList.remove("on"); };
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape") lb.classList.remove("on"); });
+})();
+</script>
+</body>
+</html>
