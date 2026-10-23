@@ -224,7 +224,17 @@ func _autojoin(addr: String) -> void:
 	print("[autojoin] online=%s players=%d phase=%s" % [Net.is_online(), Net.players.size(), Game.sim.economy.phase])
 	Net.send_chat("hello from " + Game.sim.player_name)
 	world.player.global_position = Vector3(42, 1, 6)
-	await get_tree().create_timer(4.0).timeout
+	var wait_for := 4.0
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--wait-for-peer="):
+			wait_for = float(a.substr(16))
+	var waited := 0.0
+	while waited < wait_for:
+		await get_tree().create_timer(1.0).timeout
+		waited += 1.0
+		if wait_for > 4.0 and Net.players.size() >= 2:
+			await get_tree().create_timer(4.0).timeout
+			break
 	for id in Net.players:
 		if id != Net.my_id():
 			Net.send_money(id, 10.0)
